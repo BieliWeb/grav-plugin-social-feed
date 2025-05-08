@@ -1,3 +1,11 @@
+# v1.5.0
+##  08/05/2025
+
+1. [](#new)
+    * add command to refresh access token
+1. [](#improved)
+    * clean up vendor and ide files
+
 # v1.4.1
 ##  31/05/2021
 
