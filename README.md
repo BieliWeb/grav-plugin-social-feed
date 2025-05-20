@@ -169,6 +169,12 @@ class CustomPlugin extends Plugin
 }
 ```
 
+## Refresh Tokens (Only tested with Tokens from developers.facebook.com)
+
+If Instagram and Facebook token is the same, both will be updated.
+
+Command: bin/plugin social-feed refresh:all-tokens --app_id=APP_ID --app_secret=APP_SECRET
+
 ## Networks
 
 ### Instagram

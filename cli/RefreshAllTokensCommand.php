@@ -38,8 +38,6 @@ class RefreshAllTokensCommand extends ConsoleCommand
                 InputArgument::OPTIONAL,
                 'The App Secret'
             );
-
-        ;
     }
 
     /**
@@ -98,7 +96,7 @@ class RefreshAllTokensCommand extends ConsoleCommand
         // Facebook-Token-Aktualisierung
         $client = new Client();
         try {
-            $response = $client->request('GET', 'https://graph.facebook.com/v17.0/oauth/access_token', [
+            $response = $client->request('GET', 'https://graph.facebook.com/v' . $config['facebook_api_version'] . '/oauth/access_token', [
                 'query' => [
                     'grant_type' => 'fb_exchange_token',
                     'client_id' => $clientId,
