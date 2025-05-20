@@ -1,3 +1,11 @@
+# v1.5.1
+##  20/05/2025
+
+1. [](#bugfix)
+    * take correct api version from config to update tokens
+1. [](#improved)
+    * update docu
+
 # v1.5.0
 ##  08/05/2025
 
