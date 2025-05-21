@@ -64,14 +64,13 @@ class RefreshAllTokensCommand extends ConsoleCommand
                     }
                     break;
 
+
                 case 'instagram':
+                    // currently not available
+                    return;
                     foreach ($config['instagram_feeds'] as $feed) {
                         $this->refreshInstagramToken($feed, $config);
                     }
-                    break;
-
-                case 'twitter':
-                    $this->refreshTwitterToken($config); // Placeholder: Implementieren, wenn notwendig
                     break;
 
                 default:
@@ -84,35 +83,49 @@ class RefreshAllTokensCommand extends ConsoleCommand
 
     private function refreshFacebookToken($feed, $config)
     {
-        if (!isset($feed['accesstoken']) || !isset($config['app_id']) || !isset($config['app_secret'])) {
+        if (!isset($feed['accesstoken']) || !isset($config['app_id']) || !isset($config['app_secret']) || !isset($config['facebook_api_version'])) {
             $this->error('Facebook configuration is incomplete.');
             return;
         }
 
-        $longLivedToken = $feed['accesstoken'];
+        $accesstoken = $feed['accesstoken'];
         $clientId = $config['app_id'];
         $clientSecret = $config['app_secret'];
+        $apiVersion = $config['facebook_api_version'];
 
-        // Facebook-Token-Aktualisierung
-        $client = new Client();
+
+        $arrContextOptions = array();
+
+        if($config['enablessl'] === false) {
+            $arrContextOptions['ssl']['verify_peer'] = false;
+            $arrContextOptions['ssl']['verify_peer_name'] = false;
+        }
+
+        if(isset($config['certpath']) && !empty($config['certpath'])) {
+            $arrContextOptions['ssl']['cafile'] = $config['certpath'];
+        }
+
+        $url = 'https://graph.facebook.com/v' . $apiVersion . '/oauth/access_token';
+        $url .= '?grant_type=fb_exchange_token';
+        $url .= '&client_id=' . $clientId;
+        $url .= '&client_secret=' . $clientSecret;
+        $url .= '&fb_exchange_token=' . $accesstoken;
+
         try {
-            $response = $client->request('GET', 'https://graph.facebook.com/v' . $config['facebook_api_version'] . '/oauth/access_token', [
-                'query' => [
-                    'grant_type' => 'fb_exchange_token',
-                    'client_id' => $clientId,
-                    'client_secret' => $clientSecret,
-                    'fb_exchange_token' => $longLivedToken,
-                ],
-            ]);
+            $response = file_get_contents($url, false, stream_context_create($arrContextOptions));
 
-            $body = json_decode($response->getBody(), true);
-            if (isset($body['access_token'])) {
-                $this->updateConfig('facebook', $feed, $body['access_token']);
-                $this->success("Facebook token has been refreshed.");
+            if ($response) {
+                $response = json_decode($response);
+                if (!empty($response->access_token)) {
+                    $this->updateConfig('facebook', $feed, $response->access_token);
+                    $this->success("Facebook token has been refreshed.");
+                } else {
+                    $this->error("Failed to refresh Facebook token: No access token in response.");
+                }
             } else {
-                $this->error("Failed to refresh Facebook token.");
+                $this->error("Failed to refresh Facebook token: No Response.");
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error("Error refreshing Facebook token: " . $e->getMessage());
         }
     }
