@@ -169,12 +169,6 @@ class CustomPlugin extends Plugin
 }
 ```
 
-## Refresh Tokens (Only tested with Tokens from developers.facebook.com)
-
-If Instagram and Facebook token is the same, both will be updated.
-
-Command: bin/plugin social-feed refresh:all-tokens --app_id=APP_ID --app_secret=APP_SECRET
-
 ## Networks
 
 ### Instagram
@@ -189,6 +183,12 @@ https://levelup.gitconnected.com/getting-started-with-the-instagram-basic-displa
 1. Generate Long Lived Access Token with Access Token Debugger
 1. Build Social Feed on your web page
 1. Go through app review for manage_pages
+
+
+## Refresh Tokens (Only tested with Tokens from developers.facebook.com)
+If Instagram and Facebook token is the same, both will be updated.
+Instagram only available over graph api from facebook
+Command: bin/plugin social-feed refresh:all-tokens --app_id=APP_ID --app_secret=APP_SECRET
 
 ## Credits
 

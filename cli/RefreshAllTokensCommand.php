@@ -52,7 +52,7 @@ class RefreshAllTokensCommand extends ConsoleCommand
         $config['app_secret'] = $this->input->getOption('app_secret');
 
         // Liste von unterstützten Netzwerken
-        $networks = ['facebook', 'instagram', 'twitter'];
+        $networks = ['facebook', 'instagram'];
 
         foreach ($networks as $network) {
             $this->output->writeln("Attempting to refresh token for: <yellow>$network</yellow>");
@@ -66,8 +66,6 @@ class RefreshAllTokensCommand extends ConsoleCommand
 
 
                 case 'instagram':
-                    // currently not available
-                    return;
                     foreach ($config['instagram_feeds'] as $feed) {
                         $this->refreshInstagramToken($feed, $config);
                     }
@@ -81,19 +79,8 @@ class RefreshAllTokensCommand extends ConsoleCommand
         $this->success('All token refresh attempts completed.');
     }
 
-    private function refreshFacebookToken($feed, $config)
+    private function graphApiRefresh($config, $apiVersion, $clientId, $clientSecret, $accesstoken, $network, $feed)
     {
-        if (!isset($feed['accesstoken']) || !isset($config['app_id']) || !isset($config['app_secret']) || !isset($config['facebook_api_version'])) {
-            $this->error('Facebook configuration is incomplete.');
-            return;
-        }
-
-        $accesstoken = $feed['accesstoken'];
-        $clientId = $config['app_id'];
-        $clientSecret = $config['app_secret'];
-        $apiVersion = $config['facebook_api_version'];
-
-
         $arrContextOptions = array();
 
         if($config['enablessl'] === false) {
@@ -117,54 +104,48 @@ class RefreshAllTokensCommand extends ConsoleCommand
             if ($response) {
                 $response = json_decode($response);
                 if (!empty($response->access_token)) {
-                    $this->updateConfig('facebook', $feed, $response->access_token);
-                    $this->success("Facebook token has been refreshed.");
+                    $this->updateConfig($network, $feed, $response->access_token);
+                    $this->success("{$network} token has been refreshed.");
                 } else {
-                    $this->error("Failed to refresh Facebook token: No access token in response.");
+                    $this->error("Failed to refresh {$network} token: No access token in response.");
                 }
             } else {
-                $this->error("Failed to refresh Facebook token: No Response.");
+                $this->error("Failed to refresh {$network} token: No Response.");
             }
         } catch (Exception $e) {
-            $this->error("Error refreshing Facebook token: " . $e->getMessage());
+            $this->error("Error refreshing {$network} token: " . $e->getMessage());
         }
+
+    }
+
+    private function refreshFacebookToken($feed, $config)
+    {
+        if (!isset($feed['accesstoken']) || !isset($config['app_id']) || !isset($config['app_secret']) || !isset($config['facebook_api_version'])) {
+            $this->error('Facebook configuration is incomplete.');
+            return;
+        }
+
+        $accesstoken = $feed['accesstoken'];
+        $clientId = $config['app_id'];
+        $clientSecret = $config['app_secret'];
+        $apiVersion = $config['facebook_api_version'];
+
+        $this->graphApiRefresh($config, $apiVersion, $clientId, $clientSecret, $accesstoken, 'facebook', $feed);
     }
 
     private function refreshInstagramToken($feed, $config)
     {
-        if (!isset($config['instagram_access_token'])) {
+        if (!isset($feed['access_token']) || !isset($config['app_id']) || !isset($config['app_secret']) || !isset($config['instagram_api_version'])) {
             $this->error('Instagram configuration is incomplete.');
             return;
         }
 
-        $accessToken = $config['instagram_access_token'];
+        $accesstoken = $feed['access_token'];
+        $apiVersion = $config['instagram_api_version'];
+        $clientId = $config['app_id'];
+        $clientSecret = $config['app_secret'];
 
-        // Instagram-Token-Aktualisierung
-        $client = new Client();
-        try {
-            $response = $client->request('GET', 'https://graph.instagram.com/refresh_access_token', [
-                'query' => [
-                    'grant_type' => 'ig_refresh_token',
-                    'access_token' => $accessToken,
-                ],
-            ]);
-
-            $body = json_decode($response->getBody(), true);
-            if (isset($body['access_token'])) {
-                $this->updateConfig('instagram_access_token', $body['access_token']);
-                $this->success("Instagram token has been refreshed.");
-            } else {
-                $this->error("Failed to refresh Instagram token.");
-            }
-        } catch (\Exception $e) {
-            $this->error("Error refreshing Instagram token: " . $e->getMessage());
-        }
-    }
-
-    private function refreshTwitterToken($config)
-    {
-        // Twitter erlaubt keine unmittelbare Verlängerung von Tokens wie Facebook oder Instagram.
-        $this->output->writeln('<yellow>Twitter token refresh is not implemented (requires application-specific workflow).</yellow>');
+        $this->graphApiRefresh($config, $apiVersion, $clientId, $clientSecret, $accesstoken, 'instagram', $feed);
     }
 
     private function updateConfig($network, $feed, $value)
