@@ -1,3 +1,10 @@
+# v1.5.2
+##  21/05/2025
+
+1. [](#improved)
+    * finished instagram key update
+    * update docu
+
 # v1.5.1
 ##  20/05/2025
 
