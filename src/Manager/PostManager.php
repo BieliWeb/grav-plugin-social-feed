@@ -6,6 +6,8 @@ use Grav\Common\Grav;
 use Grav\Common\File\CompiledYamlFile;
 use Grav\Plugin\SocialFeed\Model\Post;
 use RocketTheme\Toolbox\Event\Event;
+use Grav\Common\Page\Medium\MediumFactory;
+
 
 /**
  * PostManager handles CRUD actions on posts.
@@ -65,6 +67,19 @@ class PostManager
                     continue;
                 }
             }
+
+            if(
+                !empty($params['image_resize'])
+                && !empty($params['image_resize']['resize_type'])
+                && !empty($params['image_resize']['width'])
+                && !empty($params['image_resize']['height'])
+                && !empty($params['image_resize']['quality'])
+            ) {
+                $result = $this->resizeImageInMediaFolder($post['fileUrl'], $params['image_resize']['resize_type'], $params['image_resize']['width'], $params['image_resize']['height'], $params['image_resize']['quality']);
+                if ($result && $result != null) {
+                    $post['fileUrl'] = $result;
+                }
+            }
             $posts[] = $post;
         }
         // Sort posts
@@ -119,6 +134,50 @@ class PostManager
             'page' => $page,
             'posts' => $posts,
         );
+    }
+
+    public function resizeImageInMediaFolder($imagePath, $type, $width, $height, $quality)
+    {
+        $imagePathArr = explode('/', $imagePath);
+        // Absoluten Pfad der Bilddatei abrufen
+        $locator = Grav::instance()['locator'];
+        $absolutePath = $locator->findResource('user://media/' . $imagePathArr[count($imagePathArr) - 1], true);
+
+
+        // Prüfen, ob die Datei existiert
+        if (!$absolutePath || !file_exists($absolutePath)) {
+            Grav::instance()['log']->error("Die Datei '$imagePath' wurde im Medienordner nicht gefunden.");
+            return null;
+        }
+
+        // Medium aus der Datei erstellen
+        $media = MediumFactory::fromFile($absolutePath);
+
+        if (!$media) {
+            Grav::instance()['log']->error("Konnte kein Medium aus '$imagePath' erstellen.");
+            return null;
+        }
+
+        // Das Medium manipulieren (z. B. zuschneiden und skalieren)
+        switch ($type) {
+            case 'forceResize':
+                $media->forceResize($width, $height);
+                break;
+            case 'cropResize':
+                $media->cropResize($width, $height);
+                break;
+            case 'cropZoom':
+                $media->cropZoom($width, $height);
+                break;
+            default:
+                $media->resize($width, $height);
+                break;
+        }
+
+        $media->quality($quality);
+
+        // Rückgabe der URL zum bearbeiteten Bild
+        return $media->url();
     }
 
     /**

@@ -81,6 +81,7 @@ You can even pass parameters to the `socialPosts()` function:
 | providers | array   | empty         |
 | duplicated| boolean | true          |
 | tags      | array   | empty         |
+| tags      | object  | null          |
 
 For example:
 
@@ -91,6 +92,7 @@ For example:
         order_dir: 'ASC',
         limit: 50,
         providers:['facebook', 'twitter']
+        image_resize: {'resize_type': 'cropZoom', 'width': 400, 'height': 400, 'quality': 100}
     })
 %}
 ```
@@ -98,6 +100,16 @@ For example:
 #### Tags
 
 Tags for now only works for facebook posts. Using the Graph API Explorer from facebook u can check your tags in the message_tags field.
+
+#### Image Resize
+
+| **Name**       | **Type**  | **Values / Example**                             |
+|----------------|-----------|--------------------------------------------------|
+| `resize_type`  | string    | `resize`, `cropZoom`, `cropResize`, `forceResize`|
+| `width`        | integer   | `400`                                            |
+| `height`       | integer   | `400`                                            |
+| `quality`      | integer   | `1-100`                                          |
+
 
 ### Api entrypoint:
 
