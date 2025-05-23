@@ -1,3 +1,9 @@
+# v1.6.0
+##  23/05/2025
+
+1. [](#new)
+    * 1. Added the possibility to resize images and updated docu.
+
 # v1.5.2
 ##  21/05/2025
 
